@@ -1,4 +1,5 @@
 RoutingFlow
 ===========
 
-Implement distributed routing protocol in OpenFlow network
+- Compatible with Ryu SDN Framework
+- Currently in development stage
