@@ -46,15 +46,12 @@ class Switch(switches.Switch):
         self.msg_buffer = []
 
         self.queue = hub.Queue()
-        self.tbl = RoutingTable()
+        self.tbl = RoutingTable(self.dp.id)
 
         self.init_thread()
 
     def init_thread(self):
-        update_thread = Thread(target=self.update_thread)
-        update_thread.setDaemon(True)
-        update_thread.start()
-
+        logger.info('broadcast thread start with interval %ds (dpid=%s)', self.tbl.advertise_interval, dpid_to_str(self.dp.id))
         broadcast_thread = Thread(target=self.broadcast_thread)
         broadcast_thread.setDaemon(True)
         broadcast_thread.start()
@@ -64,23 +61,31 @@ class Switch(switches.Switch):
             logger.info('broadcast routing table (dpid=%s)', dpid_to_str(self.dp.id))
             for port_no, port in self.ports.items():
                 if port.neighbor_switch_dpid:
-                    self.switches[port.neighbor_switch_dpid].queue.put((port, self.tbl))
+                    self.switches[port.neighbor_switch_dpid].add_to_queue((port, self.tbl))
+                    self.switches[port.neighbor_switch_dpid].trigger_update()
             time.sleep(self.tbl.advertise_interval)
 
-    def update_thread(self):
-        while True:
-            if not self.queue.empty():
-                port, tbl = self.queue.get()
-                reveived_port = self.switches[port.neighbor_switch_dpid].ports[port.neighbor_port_no]
-                self.tbl.update_by_neighbor(reveived_port, port, tbl)
-            self.deploy_routing_table()
-            time.sleep(5)
+    def process_queued_msg(self):
+        while not self.queue.empty():
+            port, tbl = self.queue.get()
+            reveived_port = self.switches[port.neighbor_switch_dpid].ports[port.neighbor_port_no]
+            self.tbl.update_by_neighbor(reveived_port, port, tbl)
+        self.deploy_routing_table()
+
+    def add_to_queue(self, msg):
+        if not self.queue.full():
+            self.queue.put(msg)
+
+    def trigger_update(self):
+        update_thread = Thread(target=self.process_queued_msg)
+        update_thread.setDaemon(True)
+        update_thread.start()
 
     def get_arp_list(self):
         arp_list = []
         for ip, value in self.ip_to_mac.items():
             arp_list.append({'ip': str(ip),
-                             'hw_addr': value[0],
+                             'hw_addr': str(value[0]),
                              'last_update': datetime.datetime.fromtimestamp(value[1]).strftime('%Y-%m-%d %H:%M:%S')})
 
         return arp_list
