@@ -12,7 +12,8 @@ from ryu.lib import hub
 from ryu.ofproto.ofproto_v1_0_parser import OFPPhyPort
 from ryu.lib import ofctl_v1_0
 
-from rib import RoutingTable, RoutingEntry
+from rip import RIPRoutingTable as RoutingTable
+from rip import RIPRoutingEntry as RoutingEntry
 from gateway import Gateway
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class Switch(switches.Switch):
             for port_no, port in self.ports.items():
                 if port.neighbor_switch_dpid:
                     self.switches[port.neighbor_switch_dpid].queue.put((port, self.tbl))
-            time.sleep(10)
+            time.sleep(self.tbl.advertise_interval)
 
     def update_thread(self):
         while True:
