@@ -58,19 +58,26 @@ class Switch(switches.Switch):
 
     def broadcast_thread(self):
         while True:
-            logger.info('broadcast routing table (dpid=%s)', dpid_to_str(self.dp.id))
-            for port_no, port in self.ports.items():
-                if port.neighbor_switch_dpid:
-                    self.switches[port.neighbor_switch_dpid].add_to_queue((port, self.tbl))
-                    self.switches[port.neighbor_switch_dpid].trigger_update()
-            time.sleep(self.tbl.advertise_interval)
+            try:
+                logger.info('broadcast routing table (dpid=%s)', dpid_to_str(self.dp.id))
+                for port_no, port in self.ports.items():
+                    if port.neighbor_switch_dpid:
+                        self.switches[port.neighbor_switch_dpid].add_to_queue((port, self.tbl))
+                        self.switches[port.neighbor_switch_dpid].trigger_update()
+                time.sleep(self.tbl.advertise_interval)
+            except:
+                logger.info('broadcast thread of dpid=%s is killed', dpid_to_str(self.dp.id))
+                break
 
     def process_queued_msg(self):
-        while not self.queue.empty():
-            port, tbl = self.queue.get()
-            reveived_port = self.switches[port.neighbor_switch_dpid].ports[port.neighbor_port_no]
-            self.tbl.update_by_neighbor(reveived_port, port, tbl)
-        self.deploy_routing_table()
+        try:
+            while not self.queue.empty():
+                port, tbl = self.queue.get()
+                reveived_port = self.switches[port.neighbor_switch_dpid].ports[port.neighbor_port_no]
+                self.tbl.update_by_neighbor(reveived_port, port, tbl)
+            self.deploy_routing_table()
+        except:
+            pass
 
     def add_to_queue(self, msg):
         if not self.queue.full():
@@ -118,7 +125,9 @@ class Switch(switches.Switch):
         mod = self.dp.ofproto_parser.OFPFlowMod(
                     datapath = self.dp, match = match,
                     priority = 1, cookie = 0, actions = actions,
-                    command = self.dp.ofproto.OFPFC_ADD)
+                    idle_timeout = FLOW_IDLE_TIMEOUT,
+                    hard_timeout = FLOW_HARD_TIMEOUT,
+                    command = self.dp.ofproto.OFPFC_MODIFY)
 
         self.dp.send_msg(mod)
 
