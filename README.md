@@ -1,7 +1,5 @@
 # What's RoutingFlow?
 
-<img src="http://osrg.github.io/ryu/css/images/LogoSet02.png" alt="Ryu SDN Framework" style="width:250px">
-
 RoutingFlow is a project inspired by RouteFlow, aims to implement legacy and distributed routing protocol in a OpenFlow network. Currently, Routing Flow is built as a controller app for Ryu Controller and provides a basic framework and interface to implement routing protocols such as RIP, OSPF on Ryu.
 
 Compared with the well-known open source project, RouteFlow, RoutingFlow doesn't depend on existed routing software such as Quagga and run a VM for each network nodes, but provide a interface to simulate each switch as a thread to decline the hardware resource usage.
