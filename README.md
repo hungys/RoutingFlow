@@ -1,6 +1,6 @@
 # What's RoutingFlow?
 
-![Ryu SDN Framework](http://osrg.github.io/ryu/css/images/LogoSet02.png =250x)
+![](http://osrg.github.io/ryu/css/images/LogoSet02.png?raw=true =250x "Ryu SDN Framework")
 
 RoutingFlow is a project inspired by RouteFlow, aims to implement legacy and distributed routing protocol in a OpenFlow network. Currently, Routing Flow is built as a controller app for Ryu Controller and provides a basic framework and interface to implement routing protocols such as RIP, OSPF on Ryu.
 
@@ -52,11 +52,11 @@ You can learn more about RouteFlow in their
     sh set_gateway.sh
     ``` 
 
-5. RoutingFlow will triggered by topology changed event and start to advertise routing information with their neighbors, you can use ```pingall``` command in mininet CLI to test the connectivity between all nodes.
+5. RoutingFlow will triggered by topology changed event and start to advertise routing information with their neighbors, you can use `pingall` command in mininet CLI to test the connectivity between all nodes.
 
 # Protocol Implementation
 
-If you want to build your own routing protocol on RoutingFlow, you can write your custom RoutingTable and RoutingEntry class by inherit the class in ```base/rib.py```, there include some basic definitions and methods required for a routing table.
+If you want to build your own routing protocol on RoutingFlow, you can write your custom RoutingTable and RoutingEntry class by inherit the class in `base/rib.py`, there include some basic definitions and methods required for a routing table.
 
 ```
 def update_entry(self, subnet, receive_port, neighbor_port=None, metric=0):
@@ -66,7 +66,7 @@ def update_by_neighbor(self, receive_port, neighbor_port, tbl):
     raise NotImplementedError
 ```
 
-For more information, you can refer ```rip.py```, it's a basic implementation of Routing Information Protocol.
+For more information, you can refer `rip.py`, it's a basic implementation of Routing Information Protocol.
 
 # Support
 
