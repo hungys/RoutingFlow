@@ -6,6 +6,10 @@ from ryu.lib.dpid import dpid_to_str
 from ryu.lib.port_no import port_no_to_str
 
 class RoutingTable(dict):
+    """
+        base class for RoutingTable,
+        the protocol should implement the following two methods.
+    """
     def update_entry(self, subnet, receive_port, neighbor_port=None, metric=0):
         raise NotImplementedError
 
@@ -13,6 +17,9 @@ class RoutingTable(dict):
         raise NotImplementedError
 
 class RoutingEntry(object):
+    """
+        base class for RoutingEntry.
+    """
     def __init__(self, receive_port, neighbor_port, metric=0):
         self.receive_port = receive_port
         self.neighbor_port = neighbor_port

@@ -51,12 +51,20 @@ class Switch(switches.Switch):
         self.init_thread()
 
     def init_thread(self):
+        """
+            create a thread for routing table advertising.
+        """
         logger.info('broadcast thread start with interval %ds (dpid=%s)', self.tbl.advertise_interval, dpid_to_str(self.dp.id))
         broadcast_thread = Thread(target=self.broadcast_thread)
         broadcast_thread.setDaemon(True)
         broadcast_thread.start()
 
     def broadcast_thread(self):
+        """
+            infinite loop to advertise the routing table to
+            all the neighbors. trigger neighbor swtich to update
+            routing information instantly.
+        """
         while True:
             try:
                 logger.info('broadcast routing table (dpid=%s)', dpid_to_str(self.dp.id))
@@ -70,6 +78,9 @@ class Switch(switches.Switch):
                 break
 
     def process_queued_msg(self):
+        """
+            try to process all the queued routing information.
+        """
         try:
             while not self.queue.empty():
                 port, tbl = self.queue.get()
@@ -80,15 +91,24 @@ class Switch(switches.Switch):
             pass
 
     def add_to_queue(self, msg):
+        """
+            a interface to add a object into queue.
+        """
         if not self.queue.full():
             self.queue.put(msg)
 
     def trigger_update(self):
+        """
+            create a thread to update the routing table.
+        """
         update_thread = Thread(target=self.process_queued_msg)
         update_thread.setDaemon(True)
         update_thread.start()
 
     def get_arp_list(self):
+        """
+            return ARP table as a list of dictionary.
+        """
         arp_list = []
         for ip, value in self.ip_to_mac.items():
             arp_list.append({'ip': str(ip),
@@ -98,6 +118,9 @@ class Switch(switches.Switch):
         return arp_list
 
     def get_routing_table(self):
+        """
+            return routing table as a list of dictionary.
+        """
         routing_tbl = []
         for subnet, entry in self.tbl.items():
             d = entry.to_dict()
@@ -107,16 +130,28 @@ class Switch(switches.Switch):
         return routing_tbl
 
     def deploy_routing_table(self):
+        """
+            deploy all the routing entry in the routing table.
+        """
         for subnet, entry in self.tbl.items():
             if entry.neighbor_port:
                 self.deploy_flow_entry(subnet=subnet, outport=entry.receive_port, dstport=entry.neighbor_port)
 
     def deploy_flow_entry(self, subnet, outport, dstport):
+        """
+            translate the routing information into flow entry format
+            and send FlowMod.
+        """
         if outport is None:
             logger.warning('fail to deploy flow entry, cant find output port for %s', str(subnet))
             return
 
+        # match by destination IP address
         match = ofctl_v1_0.to_match(self.dp, {'nw_dst': str(subnet), 'dl_type': '2048', 'nw_proto': '1'})
+        
+        # rewrite source MAC address with gateway's MAC address
+        # rewrite destination MAC address with host's MAC address
+        # set output port
         actions = []
         actions.append(self.dp.ofproto_parser.OFPActionSetDlSrc(outport.hw_addr.packed))
         actions.append(self.dp.ofproto_parser.OFPActionSetDlDst(dstport.hw_addr.packed))
@@ -129,15 +164,23 @@ class Switch(switches.Switch):
                     hard_timeout = FLOW_HARD_TIMEOUT,
                     command = self.dp.ofproto.OFPFC_MODIFY)
 
+        # send FlowMod
         self.dp.send_msg(mod)
 
     def find_outport_by_subnet(self, subnet):
+        """
+            return port_no by subent.
+        """
         for port_no, port in self.ports.items():
             if port.gateway and port.gateway.ipv4_subnet == subnet:
                 return port_no
         return None
 
     def find_outport_by_ip(self, dst_ip):
+        """
+            return port_no by match the destination IP address with
+            the subnets.
+        """
         for port_no, port in self.ports.items():
             if port.gateway and dst_ip in port.gateway.ipv4_subnet:
                 return port_no
@@ -145,6 +188,9 @@ class Switch(switches.Switch):
 
     def update_gateway_with_prefixlen(self, ipv4='', ipv4_prefixlen=0, 
                                 ipv6='', ipv6_prefixlen=0, port_no=''):
+        """
+            update the gateway information for Port object.
+        """
         port = self.ports[port_no]
 
         if port.gateway is None:
