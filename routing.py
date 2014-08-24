@@ -27,7 +27,7 @@ from ryu.lib import ofctl_v1_0
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 import ryu.utils
 
-from switch import Switch
+from switch import Switch, FLOW_IDLE_TIMEOUT, FLOW_HARD_TIMEOUT
 from port import Port
 from gateway import Gateway
 
@@ -39,11 +39,6 @@ routing_flow_instance_name = 'routing_flow_app'
 rest_body_ok = json.dumps({'msg': 'OK'})
 
 class RoutingFlow(app_manager.RyuApp):
-    ARP_TIMEOUT = 600
-
-    FLOW_IDLE_TIMEOUT = 60
-    FLOW_HARD_TIMEOUT = 600
-
     def __init__(self, *args, **kwargs):
         super(RoutingFlow, self).__init__(*args, **kwargs)
 
@@ -390,7 +385,9 @@ class RoutingFlow(app_manager.RyuApp):
         mod = dp.ofproto_parser.OFPFlowMod(
                     datapath = dp, match = match,
                     priority = 1, cookie = 0, actions = actions,
-                    command = dp.ofproto.OFPFC_ADD)
+                    idle_timeout = FLOW_IDLE_TIMEOUT,
+                    hard_timeout = FLOW_HARD_TIMEOUT,
+                    command = dp.ofproto.OFPFC_MODIFY)
 
         out = dp.ofproto_parser.OFPPacketOut(
             datapath = dp, buffer_id = msg.buffer_id,
