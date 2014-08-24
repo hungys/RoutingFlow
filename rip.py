@@ -26,6 +26,7 @@ class RIPRoutingTable(rib.RoutingTable):
         self.advertise_interval = random.randint(TIMER_BASE_MIN, TIMER_BASE_MAX + 1)
         self.gc_interval = self.advertise_interval * 2
         self.expire_time = self.advertise_interval * 3
+        self.updating = False
 
         self.init_thread()
 
@@ -59,16 +60,24 @@ class RIPRoutingTable(rib.RoutingTable):
             (2) update self routing table by comparing with routing table
             advertised by neighbors.
         """
+        if self.updating:
+            return
+        self.updating = True
+
         self.mark_invalid_route()
 
         for subnet, entry in tbl.items():
             if subnet in self.keys():
-                if entry.metric + 1 < self[subnet].metric:
+                if self[subnet].metric == 0:
+                    self[subnet].last_update = time.time()
+                elif entry.metric + 1 < self[subnet].metric:
                     self.update_entry(subnet, receive_port, neighbor_port, entry.metric + 1)
                 else:
-                    self[subnet].last_update = time.time()
+                    # self[subnet].last_update = time.time()
+                    continue
             else:
                 self.update_entry(subnet, receive_port, neighbor_port, entry.metric + 1)
+        self.updating = False
 
     def mark_invalid_route(self):
         """
