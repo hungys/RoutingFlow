@@ -18,37 +18,37 @@ You can learn more about RouteFlow in their
 # Building
 
 1. Install Ryu SDN Framework
-    * Using pip command is the easiest option:
+  * Using pip command is the easiest option:
+  
+    ```
+    % pip install ryu
+    ```
+  * If you prefer to install from the source code:
+  
+    ```
+    % git clone git://github.com/osrg/ryu.git 
+    % cd ryu; python ./setup.py install 
+    ```
     
-        ```
-        % pip install ryu
-        ```
-    * If you prefer to install from the source code:
-    
-        ```
-        % git clone git://github.com/osrg/ryu.git 
-        % cd ryu; python ./setup.py install 
-        ```
-        
 2. (optional) Run the python script to build sample topogloty, it will run the mininet and generate a network topology with 3 switches and 4 hosts.
 
-    ```
-    sudo python test/sample_topology.py
-    ```
+  ```
+  sudo python test/sample_topology.py
+  ```
 
 3. Run the RoutingFlow app using ryu-manager
-    
-    Noticed that **ryu.topology.switches** is a required module to dicover the network topology for RoutingFlow.
+  
+  Noticed that **ryu.topology.switches** is a required module to dicover the network topology for RoutingFlow.
 
-    ```
-    sudo ryu-manager --verbose --observe-links --default-log-level 20   ryu.topology.switches ryu.app.rest_topology ryu.app.ofctl_rest /home/user/  RoutingFlow/routing.py
-    ```
+  ```
+  sudo ryu-manager --verbose --observe-links --default-log-level 20   ryu.topology.switches ryu.app.rest_topology ryu.app.ofctl_rest /home/user/  RoutingFlow/routing.py
+  ```
 
 4. Run the shell script to send HTTP request for gateway settings modification
 
-    ```
-    sh set_gateway.sh
-    ``` 
+  ```
+  sh set_gateway.sh
+  ``` 
 
 5. RoutingFlow will triggered by topology changed event and start to advertise routing information with their neighbors, you can use `pingall` command in mininet CLI to test the connectivity between all nodes.
 
@@ -465,6 +465,11 @@ response:
 ```
 { "msg" : "OK" }
 ```
+
+# Known Issues (To-Do)
+
+* Slow convergence time of RIP when link down -> Implement Split Horizon to resolve it
+* Would be better to add source attribute for routing entry
 
 # Support
 
