@@ -40,7 +40,7 @@ class RIPRoutingTable(rib.RoutingTable):
         gc_thread.start()
 
     # override
-    def update_entry(self, subnet, receive_port, neighbor_port=None, metric=0):
+    def update_entry(self, subnet, receive_port, neighbor_port=None, metric=0, source="RIP"):
         """
             update single routing entry.
         """
@@ -49,9 +49,10 @@ class RIPRoutingTable(rib.RoutingTable):
             r.receive_port = receive_port
             r.neighbor_port = neighbor_port
             r.metric = metric
+            r.source = source
             r.last_update = time.time()
         except KeyError:
-            self[subnet] = RIPRoutingEntry(receive_port, neighbor_port, metric)
+            self[subnet] = RIPRoutingEntry(receive_port, neighbor_port, metric, source)
 
     # override
     def update_by_neighbor(self, receive_port, neighbor_port, tbl):
@@ -68,15 +69,15 @@ class RIPRoutingTable(rib.RoutingTable):
 
         for subnet, entry in tbl.items():
             if subnet in self.keys():
-                if self[subnet].metric == 0:
+                if self[subnet].source == "CONNECTED" or self[subnet].metric == 0:
                     self[subnet].last_update = time.time()
                 elif entry.metric + 1 < self[subnet].metric:
                     self.update_entry(subnet, receive_port, neighbor_port, entry.metric + 1)
                 else:
-                    # self[subnet].last_update = time.time()
                     continue
             else:
                 self.update_entry(subnet, receive_port, neighbor_port, entry.metric + 1)
+        
         self.updating = False
 
     def mark_invalid_route(self):
@@ -103,11 +104,12 @@ class RIPRoutingTable(rib.RoutingTable):
         time.sleep(self.gc_interval)
 
 class RIPRoutingEntry(rib.RoutingEntry):
-    def __init__(self, receive_port, neighbor_port, metric=0):
+    def __init__(self, receive_port, neighbor_port, metric=0, source="RIP"):
         self.receive_port = receive_port
         self.neighbor_port = neighbor_port
         self.metric = metric
         self.last_update = time.time()
+        self.source = source
 
     def to_dict(self):
         r = {}
@@ -116,6 +118,7 @@ class RIPRoutingEntry(rib.RoutingEntry):
         if self.metric != 0:
             r['next_hop'] = dpid_to_str(self.neighbor_port.dpid)
         r['metric'] = self.metric
+        r['source'] = self.source
         r['last_update'] = datetime.datetime.fromtimestamp(self.last_update).strftime('%Y-%m-%d %H:%M:%S')
 
         return r

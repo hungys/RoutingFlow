@@ -469,9 +469,8 @@ response:
 # Known Issues (To-Do)
 
 * Slow convergence time of RIP when link down -> Implement Split Horizon to resolve it
-* Would be better to add source attribute for routing entry
 
-# Support
+# Contact
 
 I am a newbie in SDN development, feel free to fork the project and make it better. If you want to know more or need to contact me regarding the project for 
 anything, you can just send me a mail: [hungys@hotmail.com](mailto:hungys@hotmail.com)

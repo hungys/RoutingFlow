@@ -205,7 +205,7 @@ class Switch(switches.Switch):
             port.gateway.ipv6_subnet = netaddr.IPNetwork(ipv6 + '/' + str(ipv6_prefixlen))
             port.gateway.port_no = port.port_no
 
-        self.tbl.update_entry(subnet=port.gateway.ipv4_subnet, receive_port=port, metric=0)
+        self.tbl.update_entry(subnet=port.gateway.ipv4_subnet, receive_port=port, metric=0, source="CONNECTED")
 
     def to_dict(self):
         return {'dpid': dpid_to_str(self.dp.id),
